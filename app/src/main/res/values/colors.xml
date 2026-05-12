@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#673AB7</color>
+    <color name="primary_dark">#512DA8</color>
+    <color name="primary_light">#D1C4E9</color>
+    <color name="accent">#FF9800</color>
+
+    <color name="green">#4CAF50</color>
+    <color name="green_dark">#2E7D32</color>
+    <color name="green_light">#C8E6C9</color>
+    <color name="lesson_green">#58CC71</color>
+
+    <color name="orange">#FF9800</color>
+    <color name="orange_dark">#E65100</color>
+    <color name="orange_light">#FFE0B2</color>
+
+    <color name="blue">#2196F3</color>
+    <color name="blue_dark">#1565C0</color>
+    <color name="blue_light">#BBDEFB</color>
+
+    <color name="red">#F44336</color>
+    <color name="red_dark">#D32F2F</color>
+
+    <color name="streak_banner_bg">#FFF3E0</color>
+    <color name="streak_text">#E65100</color>
+
+    <color name="background">#F7F8FA</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="text_primary">#1A1A2E</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="footer_bg">#F5F5F5</color>
+    <color name="footer_text">#999999</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

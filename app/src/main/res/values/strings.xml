@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LinguaAI</string>
+    <string name="login_title">Вход в аккаунт</string>
+    <string name="register_title">Создание аккаунта</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Пароль</string>
+    <string name="confirm_password_hint">Подтвердите пароль</string>
+    <string name="name_hint">Имя</string>
+    <string name="login_button">Войти</string>
+    <string name="register_button">Зарегистрироваться</string>
+    <string name="no_account">Нет аккаунта?</string>
+    <string name="create_account">Создать аккаунт</string>
+    <string name="have_account">Уже есть аккаунт?</string>
+    <string name="sign_in">Войти</string>
+    <string name="loading">Загрузка...</string>
+    <string name="subtitle_login">Изучай языки с AI-репетитором</string>
+    <string name="subtitle_register">Начни своё путешествие в мир языков</string>
+    <string name="footer">© 2024 LinguaAI - Учись с удовольствием</string>
+
+    <!-- Language Selection -->
+    <string name="select_language_title">Выбор языка</string>
+    <string name="target_language">Язык для изучения</string>
+    <string name="native_language">Родной язык</string>
+    <string name="difficulty_level">Уровень сложности</string>
+    <string name="beginner">Начинающий</string>
+    <string name="intermediate">Средний</string>
+    <string name="advanced">Продвинутый</string>
+    <string name="complete_registration">Завершить регистрацию</string>
+    <string name="back">Назад</string>
+
+    <!-- Dashboard -->
+    <string name="hello">Привет,</string>
+    <string name="streak_banner">%d дней подряд — так держать!</string>
+    <string name="days">дней</string>
+    <string name="xp">XP</string>
+    <string name="words">слов</string>
+    <string name="start_lesson">Начать урок</string>
+    <string name="daily_goal">Цель на сегодня</string>
+    <string name="daily_tip">Совет дня</string>
+    <string name="review_words">Слова для повторения</string>
+
+    <!-- Lesson -->
+    <string name="lesson_title">Урок</string>
+    <string name="how_translate">Как переводится?</string>
+    <string name="enter_translation">Введите перевод</string>
+    <string name="check">Проверить</string>
+    <string name="next_word">Следующее</string>
+    <string name="end_lesson">Завершить урок</string>
+    <string name="show_example">Показать пример</string>
+    <string name="generating_example">Генерируем пример...</string>
+    <string name="abort_lesson">Завершить</string>
+
+    <!-- Statistics -->
+    <string name="statistics_title">Статистика</string>
+    <string name="total_xp">Всего XP</string>
+    <string name="streak">Серия</string>
+    <string name="longest_streak">Рекорд серии</string>
+    <string name="words_learned">Слов изучено</string>
+    <string name="total_sessions">Уроков</string>
+    <string name="accuracy">Точность</string>
+    <string name="ai_analysis">AI-анализ</string>
+
+    <!-- Achievements -->
+    <string name="achievements_title">Достижения</string>
+    <string name="earned">Получено</string>
+    <string name="not_earned">Не получено</string>
+
+    <!-- Vocabulary -->
+    <string name="vocabulary_title">Словарь</string>
+    <string name="search_hint">Поиск слова...</string>
+    <string name="no_topic">Без темы</string>
+    <string name="new_word">Новое</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Профиль</string>
+    <string name="daily_goal_words">Цель слов в день</string>
+    <string name="daily_goal_minutes">Цель минут в день</string>
+    <string name="save">Сохранить</string>
+    <string name="logout">Выйти</string>
+    <string name="member_since">Участник с</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_lesson">Урок</string>
+    <string name="nav_stats">Статистика</string>
+    <string name="nav_achievements">Награды</string>
+    <string name="nav_profile">Профиль</string>
+</resources>

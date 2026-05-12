@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background"
+    android:padding="16dp">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📚 Урок"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/tvScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_score_badge"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAbort"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/abort_lesson"
+                style="@style/RedButton"
+                android:layout_marginStart="12dp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressLesson"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:layout_marginTop="12dp"
+            android:max="100"
+            android:progress="0" />
+    </LinearLayout>
+
+    <!-- Loading -->
+    <ProgressBar
+        android:id="@+id/progressLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvGenerating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🤖 Генерируем слова для урока..."
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- Word Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardWord"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/how_translate"
+                android:textSize="16sp"
+                android:textColor="@color/text_hint" />
+
+            <TextView
+                android:id="@+id/tvCurrentWord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Show Example Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnShowExample"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📖 Показать пример"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Example Area -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardExample"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#F5F5F5"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tvExample"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:padding="16dp" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/tvGeneratingExample"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/generating_example"
+                android:textSize="12sp"
+                android:textColor="@color/text_hint"
+                android:visibility="gone" />
+
+            <!-- Answer Input -->
+            <LinearLayout
+                android:id="@+id/layoutAnswer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="280dp"
+                    android:layout_height="wrap_content"
+                    style="@style/InputField"
+                    android:layout_marginBottom="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAnswer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/enter_translation"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCheck"
+                    android:layout_width="160dp"
+                    android:layout_height="48dp"
+                    android:text="@string/check"
+                    style="@style/GreenButton" />
+            </LinearLayout>
+
+            <!-- Feedback Area -->
+            <LinearLayout
+                android:id="@+id/layoutFeedback"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvFeedback"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:padding="16dp"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="160dp"
+                    android:layout_height="48dp"
+                    android:text="@string/next_word"
+                    style="@style/OrangeButton" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEndLesson"
+                    android:layout_width="160dp"
+                    android:layout_height="48dp"
+                    android:text="@string/end_lesson"
+                    style="@style/GreenButton"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>
