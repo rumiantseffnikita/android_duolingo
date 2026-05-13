@@ -1,5 +1,6 @@
 package com.linguaai.app.services
 
+import android.util.Log
 import com.linguaai.app.models.Language
 import com.linguaai.app.models.User
 import io.github.jan.supabase.postgrest.postgrest
@@ -118,15 +119,32 @@ class AuthService {
 
     suspend fun getAllLanguages(): List<Language> {
         return try {
-            client.postgrest["languages"]
-                .select {
-                    filter { eq("is_active", true) }
-                }
+            val result = client.postgrest["languages"]
+                .select()
                 .decodeList<Language>()
+                .filter { it.isActive != false }
                 .sortedBy { it.name }
+            Log.d("AuthService", "Loaded ${result.size} languages from Supabase")
+            if (result.isEmpty()) getFallbackLanguages() else result
         } catch (e: Exception) {
-            emptyList()
+            Log.e("AuthService", "getAllLanguages error: ${e.message}", e)
+            getFallbackLanguages()
         }
+    }
+
+    private fun getFallbackLanguages(): List<Language> {
+        return listOf(
+            Language(1, "en", "Английский", "English", "\uD83C\uDDEC\uD83C\uDDE7", true),
+            Language(2, "ru", "Русский", "Русский", "\uD83C\uDDF7\uD83C\uDDFA", true),
+            Language(3, "de", "Немецкий", "Deutsch", "\uD83C\uDDE9\uD83C\uDDEA", true),
+            Language(4, "fr", "Французский", "Français", "\uD83C\uDDEB\uD83C\uDDF7", true),
+            Language(5, "es", "Испанский", "Español", "\uD83C\uDDEA\uD83C\uDDF8", true),
+            Language(6, "it", "Итальянский", "Italiano", "\uD83C\uDDEE\uD83C\uDDF9", true),
+            Language(7, "zh", "Китайский", "中文", "\uD83C\uDDE8\uD83C\uDDF3", true),
+            Language(8, "ja", "Японский", "日本語", "\uD83C\uDDEF\uD83C\uDDF5", true),
+            Language(9, "ko", "Корейский", "한국어", "\uD83C\uDDF0\uD83C\uDDF7", true),
+            Language(10, "pt", "Португальский", "Português", "\uD83C\uDDF5\uD83C\uDDF9", true)
+        )
     }
 
     suspend fun updateUserLanguages(

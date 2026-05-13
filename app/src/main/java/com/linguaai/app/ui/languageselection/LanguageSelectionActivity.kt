@@ -2,6 +2,7 @@ package com.linguaai.app.ui.languageselection
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
@@ -38,13 +39,37 @@ class LanguageSelectionActivity : AppCompatActivity() {
     private fun loadLanguages() {
         setLoading(true)
         lifecycleScope.launch {
-            languages = authService.getAllLanguages()
+            try {
+                languages = authService.getAllLanguages()
+                Log.d("LanguageSelection", "Loaded ${languages.size} languages")
+            } catch (e: Exception) {
+                Log.e("LanguageSelection", "Error loading languages", e)
+                showStatus("Ошибка загрузки языков: ${e.message}")
+            }
             setLoading(false)
 
+            if (languages.isEmpty()) {
+                showStatus("Не удалось загрузить языки")
+                return@launch
+            }
+
             val names = languages.map { "${it.flagEmoji ?: ""} ${it.name}" }
-            val adapter = ArrayAdapter(this@LanguageSelectionActivity, android.R.layout.simple_spinner_dropdown_item, names)
-            binding.spinnerTargetLanguage.adapter = adapter
-            binding.spinnerNativeLanguage.adapter = adapter
+            val targetAdapter = ArrayAdapter(
+                this@LanguageSelectionActivity,
+                android.R.layout.simple_spinner_item,
+                names
+            )
+            targetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+            val nativeAdapter = ArrayAdapter(
+                this@LanguageSelectionActivity,
+                android.R.layout.simple_spinner_item,
+                names
+            )
+            nativeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+            binding.spinnerTargetLanguage.adapter = targetAdapter
+            binding.spinnerNativeLanguage.adapter = nativeAdapter
 
             val enIndex = languages.indexOfFirst { it.code == "en" }
             val ruIndex = languages.indexOfFirst { it.code == "ru" }
