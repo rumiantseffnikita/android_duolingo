@@ -5,6 +5,8 @@ import com.linguaai.app.models.Language
 import com.linguaai.app.models.User
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.Instant
 import java.util.UUID
 
@@ -161,13 +163,14 @@ class AuthService {
         dailyGoalMinutes: Int? = null
     ): UpdateResult {
         return try {
-            val updates = mutableMapOf<String, Any>()
-            targetLanguageId?.let { updates["target_language_id"] = it }
-            nativeLanguageId?.let { updates["native_language_id"] = it }
-            difficultyLevel?.let { updates["difficulty_level"] = it }
-            dailyGoalWords?.let { updates["daily_goal_words"] = it }
-            dailyGoalMinutes?.let { updates["daily_goal_minutes"] = it }
-            updates["updated_at"] = Instant.now().toString()
+            val updates = buildJsonObject {
+                targetLanguageId?.let { put("target_language_id", it) }
+                nativeLanguageId?.let { put("native_language_id", it) }
+                difficultyLevel?.let { put("difficulty_level", it) }
+                dailyGoalWords?.let { put("daily_goal_words", it) }
+                dailyGoalMinutes?.let { put("daily_goal_minutes", it) }
+                put("updated_at", Instant.now().toString())
+            }
 
             Log.d("AuthService", "updateUserLanguages: userId=$userId, updates=$updates")
 

@@ -3,6 +3,8 @@ package com.linguaai.app.services
 import android.util.Log
 import com.linguaai.app.models.*
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -75,18 +77,18 @@ class WordService {
                 val user = getUserById(userId)
                 val langId = user?.targetLanguageId ?: 1
                 val sessionId = UUID.randomUUID().toString()
-                val sessionMap = mapOf(
-                    "id" to sessionId,
-                    "user_id" to userId,
-                    "language_id" to langId,
-                    "started_at" to Instant.now().toString(),
-                    "words_studied" to 0,
-                    "correct_answers" to 0,
-                    "wrong_answers" to 0,
-                    "xp_earned" to 0
-                )
-                Log.d(tag, "Creating new session: $sessionMap")
-                client.postgrest["learning_sessions"].insert(sessionMap)
+                val sessionJson = buildJsonObject {
+                    put("id", sessionId)
+                    put("user_id", userId)
+                    put("language_id", langId)
+                    put("started_at", Instant.now().toString())
+                    put("words_studied", 0)
+                    put("correct_answers", 0)
+                    put("wrong_answers", 0)
+                    put("xp_earned", 0)
+                }
+                Log.d(tag, "Creating new session: $sessionJson")
+                client.postgrest["learning_sessions"].insert(sessionJson)
                 activeSession = LearningSession(
                     id = sessionId,
                     userId = userId,
@@ -100,18 +102,18 @@ class WordService {
                 Log.d(tag, "Session created: $sessionId")
             }
 
-            val exerciseMap = mapOf(
-                "session_id" to activeSession.id,
-                "word_id" to wordId,
-                "exercise_type" to "translation",
-                "user_answer" to userAnswer,
-                "is_correct" to isCorrect,
-                "ai_feedback" to aiFeedback,
-                "answered_at" to Instant.now().toString(),
-                "response_time_ms" to 0
-            )
+            val exerciseJson = buildJsonObject {
+                put("session_id", activeSession.id)
+                put("word_id", wordId)
+                put("exercise_type", "translation")
+                put("user_answer", userAnswer)
+                put("is_correct", isCorrect)
+                put("ai_feedback", aiFeedback)
+                put("answered_at", Instant.now().toString())
+                put("response_time_ms", 0)
+            }
             Log.d(tag, "Inserting exercise result for session: ${activeSession.id}")
-            client.postgrest["exercise_results"].insert(exerciseMap)
+            client.postgrest["exercise_results"].insert(exerciseJson)
             Log.d(tag, "Exercise result inserted")
 
             val newCorrect = (activeSession.correctAnswers ?: 0) + if (isCorrect) 1 else 0
@@ -121,12 +123,12 @@ class WordService {
             val newXp = (activeSession.xpEarned ?: 0) + xpGain
 
             client.postgrest["learning_sessions"].update(
-                mapOf(
-                    "correct_answers" to newCorrect,
-                    "wrong_answers" to newWrong,
-                    "words_studied" to newWordsStudied,
-                    "xp_earned" to newXp
-                )
+                buildJsonObject {
+                    put("correct_answers", newCorrect)
+                    put("wrong_answers", newWrong)
+                    put("words_studied", newWordsStudied)
+                    put("xp_earned", newXp)
+                }
             ) {
                 filter { eq("id", activeSession.id) }
             }
@@ -135,11 +137,11 @@ class WordService {
             val currentUser = getUserById(userId)
             if (currentUser != null) {
                 client.postgrest["users"].update(
-                    mapOf(
-                        "total_xp" to ((currentUser.totalXp ?: 0) + xpGain),
-                        "last_activity_date" to LocalDate.now().toString(),
-                        "updated_at" to Instant.now().toString()
-                    )
+                    buildJsonObject {
+                        put("total_xp", (currentUser.totalXp ?: 0) + xpGain)
+                        put("last_activity_date", LocalDate.now().toString())
+                        put("updated_at", Instant.now().toString())
+                    }
                 ) {
                     filter { eq("id", userId) }
                 }
@@ -174,32 +176,32 @@ class WordService {
                 val learned = newCorrect >= 3
 
                 client.postgrest["word_progresses"].update(
-                    mapOf(
-                        "correct_count" to newCorrect,
-                        "wrong_count" to newWrong,
-                        "repetitions" to newReps,
-                        "is_learned" to learned,
-                        "last_review" to LocalDate.now().toString(),
-                        "next_review" to LocalDate.now().plusDays(if (learned) 7 else 1).toString(),
-                        "updated_at" to Instant.now().toString()
-                    )
+                    buildJsonObject {
+                        put("correct_count", newCorrect)
+                        put("wrong_count", newWrong)
+                        put("repetitions", newReps)
+                        put("is_learned", learned)
+                        put("last_review", LocalDate.now().toString())
+                        put("next_review", LocalDate.now().plusDays(if (learned) 7 else 1).toString())
+                        put("updated_at", Instant.now().toString())
+                    }
                 ) {
                     filter { eq("id", existing.id) }
                 }
             } else {
-                val progressMap = mapOf(
-                    "user_id" to userId,
-                    "word_id" to wordId,
-                    "repetitions" to 1,
-                    "correct_count" to if (isCorrect) 1 else 0,
-                    "wrong_count" to if (!isCorrect) 1 else 0,
-                    "is_learned" to false,
-                    "last_review" to LocalDate.now().toString(),
-                    "next_review" to LocalDate.now().plusDays(1).toString(),
-                    "created_at" to Instant.now().toString(),
-                    "updated_at" to Instant.now().toString()
-                )
-                client.postgrest["word_progresses"].insert(progressMap)
+                val progressJson = buildJsonObject {
+                    put("user_id", userId)
+                    put("word_id", wordId)
+                    put("repetitions", 1)
+                    put("correct_count", if (isCorrect) 1 else 0)
+                    put("wrong_count", if (!isCorrect) 1 else 0)
+                    put("is_learned", false)
+                    put("last_review", LocalDate.now().toString())
+                    put("next_review", LocalDate.now().plusDays(1).toString())
+                    put("created_at", Instant.now().toString())
+                    put("updated_at", Instant.now().toString())
+                }
+                client.postgrest["word_progresses"].insert(progressJson)
             }
         } catch (e: Exception) {
             Log.e(tag, "updateWordProgress Error: ${e.message}")
@@ -282,10 +284,10 @@ class WordService {
             val duration = (Instant.now().epochSecond - startedAt.epochSecond).toInt()
 
             client.postgrest["learning_sessions"].update(
-                mapOf(
-                    "finished_at" to Instant.now().toString(),
-                    "duration_sec" to duration
-                )
+                buildJsonObject {
+                    put("finished_at", Instant.now().toString())
+                    put("duration_sec", duration)
+                }
             ) {
                 filter { eq("id", session.id) }
             }
