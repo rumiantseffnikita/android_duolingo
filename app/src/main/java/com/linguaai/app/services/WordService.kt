@@ -65,31 +65,43 @@ class WordService {
                 .firstOrNull()
 
             if (activeSession == null) {
-                val newSession = LearningSession(
-                    id = UUID.randomUUID().toString(),
+                val user = getUserById(userId)
+                val langId = user?.targetLanguageId ?: 1
+                val sessionId = UUID.randomUUID().toString()
+                val sessionMap = mapOf(
+                    "id" to sessionId,
+                    "user_id" to userId,
+                    "language_id" to langId,
+                    "started_at" to Instant.now().toString(),
+                    "words_studied" to 0,
+                    "correct_answers" to 0,
+                    "wrong_answers" to 0,
+                    "xp_earned" to 0
+                )
+                client.postgrest["learning_sessions"].insert(sessionMap)
+                activeSession = LearningSession(
+                    id = sessionId,
                     userId = userId,
-                    languageId = 2,
+                    languageId = langId,
                     startedAt = Instant.now().toString(),
                     wordsStudied = 0,
                     correctAnswers = 0,
                     wrongAnswers = 0,
                     xpEarned = 0
                 )
-                client.postgrest["learning_sessions"].insert(newSession)
-                activeSession = newSession
             }
 
-            val exerciseResult = ExerciseResult(
-                sessionId = activeSession.id,
-                wordId = wordId,
-                exerciseType = "translation",
-                userAnswer = userAnswer,
-                isCorrect = isCorrect,
-                aiFeedback = aiFeedback,
-                answeredAt = Instant.now().toString(),
-                responseTimeMs = 0
+            val exerciseMap = mapOf(
+                "session_id" to activeSession.id,
+                "word_id" to wordId,
+                "exercise_type" to "translation",
+                "user_answer" to userAnswer,
+                "is_correct" to isCorrect,
+                "ai_feedback" to aiFeedback,
+                "answered_at" to Instant.now().toString(),
+                "response_time_ms" to 0
             )
-            client.postgrest["exercise_results"].insert(exerciseResult)
+            client.postgrest["exercise_results"].insert(exerciseMap)
 
             val newCorrect = (activeSession.correctAnswers ?: 0) + if (isCorrect) 1 else 0
             val newWrong = (activeSession.wrongAnswers ?: 0) + if (!isCorrect) 1 else 0
@@ -108,11 +120,12 @@ class WordService {
                 filter { eq("id", activeSession.id) }
             }
 
-            val user = getUserById(userId)
-            if (user != null) {
+            val currentUser = getUserById(userId)
+            if (currentUser != null) {
                 client.postgrest["users"].update(
                     mapOf(
-                        "total_xp" to ((user.totalXp ?: 0) + xpGain),
+                        "total_xp" to ((currentUser.totalXp ?: 0) + xpGain),
+                        "last_activity_date" to LocalDate.now().toString(),
                         "updated_at" to Instant.now().toString()
                     )
                 ) {
@@ -158,19 +171,19 @@ class WordService {
                     filter { eq("id", existing.id) }
                 }
             } else {
-                val newProgress = WordProgress(
-                    userId = userId,
-                    wordId = wordId,
-                    repetitions = 1,
-                    correctCount = if (isCorrect) 1 else 0,
-                    wrongCount = if (!isCorrect) 1 else 0,
-                    isLearned = false,
-                    lastReview = LocalDate.now().toString(),
-                    nextReview = LocalDate.now().plusDays(1).toString(),
-                    createdAt = Instant.now().toString(),
-                    updatedAt = Instant.now().toString()
+                val progressMap = mapOf(
+                    "user_id" to userId,
+                    "word_id" to wordId,
+                    "repetitions" to 1,
+                    "correct_count" to if (isCorrect) 1 else 0,
+                    "wrong_count" to if (!isCorrect) 1 else 0,
+                    "is_learned" to false,
+                    "last_review" to LocalDate.now().toString(),
+                    "next_review" to LocalDate.now().plusDays(1).toString(),
+                    "created_at" to Instant.now().toString(),
+                    "updated_at" to Instant.now().toString()
                 )
-                client.postgrest["word_progresses"].insert(newProgress)
+                client.postgrest["word_progresses"].insert(progressMap)
             }
         } catch (e: Exception) {
             Log.e(tag, "updateWordProgress Error: ${e.message}")

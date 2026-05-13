@@ -78,7 +78,7 @@ class LessonActivity : AppCompatActivity() {
         binding.layoutAnswer.visibility = View.VISIBLE
         binding.layoutFeedback.visibility = View.GONE
         binding.cardExample.visibility = View.GONE
-        binding.btnShowExample.visibility = View.VISIBLE
+        binding.btnShowExample.visibility = View.GONE
         binding.tvGeneratingExample.visibility = View.GONE
 
         val progress = if (total > 0) ((currentIndex) * 100 / total) else 0
@@ -117,7 +117,7 @@ class LessonActivity : AppCompatActivity() {
 
             binding.layoutAnswer.visibility = View.GONE
             binding.layoutFeedback.visibility = View.VISIBLE
-            binding.btnShowExample.visibility = View.GONE
+            binding.btnShowExample.visibility = View.VISIBLE
             binding.btnCheck.isEnabled = true
 
             binding.tvScore.text = score.toString()
