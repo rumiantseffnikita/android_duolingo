@@ -102,19 +102,23 @@ class WordService {
                 Log.d(tag, "Session created: $sessionId")
             }
 
-            val exerciseJson = buildJsonObject {
-                put("session_id", activeSession.id)
-                put("word_id", wordId)
-                put("exercise_type", "translation")
-                put("user_answer", userAnswer)
-                put("is_correct", isCorrect)
-                put("ai_feedback", aiFeedback)
-                put("answered_at", Instant.now().toString())
-                put("response_time_ms", 0)
+            if (wordId > 0) {
+                val exerciseJson = buildJsonObject {
+                    put("session_id", activeSession.id)
+                    put("word_id", wordId)
+                    put("exercise_type", "translation")
+                    put("user_answer", userAnswer)
+                    put("is_correct", isCorrect)
+                    put("ai_feedback", aiFeedback)
+                    put("answered_at", Instant.now().toString())
+                    put("response_time_ms", 0)
+                }
+                Log.d(tag, "Inserting exercise result for session: ${activeSession.id}")
+                client.postgrest["exercise_results"].insert(exerciseJson)
+                Log.d(tag, "Exercise result inserted")
+            } else {
+                Log.d(tag, "Skipping exercise_results insert for AI-generated word (id=$wordId)")
             }
-            Log.d(tag, "Inserting exercise result for session: ${activeSession.id}")
-            client.postgrest["exercise_results"].insert(exerciseJson)
-            Log.d(tag, "Exercise result inserted")
 
             val newCorrect = (activeSession.correctAnswers ?: 0) + if (isCorrect) 1 else 0
             val newWrong = (activeSession.wrongAnswers ?: 0) + if (!isCorrect) 1 else 0
@@ -148,7 +152,9 @@ class WordService {
                 Log.d(tag, "User XP updated")
             }
 
-            updateWordProgress(userId, wordId, isCorrect)
+            if (wordId > 0) {
+                updateWordProgress(userId, wordId, isCorrect)
+            }
             Log.d(tag, "saveExerciseResult completed successfully")
             return null
         } catch (e: Exception) {

@@ -10,6 +10,7 @@ import com.linguaai.app.databinding.ActivityLessonBinding
 import com.linguaai.app.models.Word
 import com.linguaai.app.services.AIService
 import com.linguaai.app.services.AchievementService
+import com.linguaai.app.services.AuthService
 import com.linguaai.app.services.WordService
 import com.linguaai.app.utils.SessionManager
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ class LessonActivity : AppCompatActivity() {
     private val wordService = WordService()
     private val aiService = AIService()
     private val achievementService = AchievementService()
+    private val authService = AuthService()
 
     private var words = listOf<Word>()
     private var currentIndex = 0
@@ -47,10 +49,29 @@ class LessonActivity : AppCompatActivity() {
         binding.cardWord.visibility = View.GONE
 
         lifecycleScope.launch {
-            words = wordService.getWordsForLesson(user.id)
+            // Try AI-generated words first
+            val languages = authService.getAllLanguages()
+            val targetLang = languages.find { it.id == user.targetLanguageId }?.name ?: "Английский"
+            val nativeLang = languages.find { it.id == user.nativeLanguageId }?.name ?: "Русский"
+            val difficulty = user.difficultyLevel ?: "beginner"
 
-            if (words.isEmpty()) {
-                words = wordService.getAnyWords(10)
+            val generated = aiService.generateWordsForLesson(targetLang, nativeLang, difficulty)
+            if (generated.isNotEmpty()) {
+                words = generated.mapIndexed { index, gw ->
+                    Word(
+                        id = -(index + 1),
+                        word = gw.word,
+                        translation = gw.translation,
+                        transcription = gw.transcription,
+                        exampleSentence = gw.exampleSentence,
+                        exampleTranslation = gw.exampleTranslation
+                    )
+                }
+            } else {
+                words = wordService.getWordsForLesson(user.id)
+                if (words.isEmpty()) {
+                    words = wordService.getAnyWords(10)
+                }
             }
 
             total = words.size
