@@ -20,7 +20,7 @@ class AIService {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    private val apiKey: String = BuildConfig.GEMINI_API_KEY
+    private val apiKey: String = BuildConfig.OPENROUTER_API_KEY
     private val useRealAI: Boolean get() = apiKey.isNotBlank()
 
     private val tag = "AIService"
@@ -41,37 +41,34 @@ class AIService {
         "Совет: Читайте книги на изучаемом языке"
     )
 
-    private suspend fun callGeminiAPI(prompt: String, retries: Int = 2): String? {
+    private suspend fun callOpenRouterAPI(prompt: String, retries: Int = 2): String? {
         return withContext(Dispatchers.IO) {
             var lastError: String? = null
             for (attempt in 0..retries) {
                 try {
                     if (attempt > 0) {
-                        Log.d(tag, "Gemini retry attempt $attempt, waiting ${attempt * 15}s...")
-                        Thread.sleep(attempt * 15_000L)
+                        Log.d(tag, "OpenRouter retry attempt $attempt, waiting ${attempt * 10}s...")
+                        Thread.sleep(attempt * 10_000L)
                     }
 
                     val requestBody = JSONObject().apply {
-                        put("contents", JSONArray().apply {
+                        put("model", "openrouter/free")
+                        put("messages", JSONArray().apply {
                             put(JSONObject().apply {
-                                put("parts", JSONArray().apply {
-                                    put(JSONObject().apply {
-                                        put("text", prompt)
-                                    })
-                                })
+                                put("role", "user")
+                                put("content", prompt)
                             })
                         })
-                        put("generationConfig", JSONObject().apply {
-                            put("temperature", 0.7)
-                            put("maxOutputTokens", 1000)
-                        })
+                        put("temperature", 0.7)
+                        put("max_tokens", 1000)
                     }
 
-                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-
                     val request = Request.Builder()
-                        .url(url)
+                        .url("https://openrouter.ai/api/v1/chat/completions")
+                        .addHeader("Authorization", "Bearer $apiKey")
                         .addHeader("Content-Type", "application/json")
+                        .addHeader("HTTP-Referer", "https://linguaai.app")
+                        .addHeader("X-Title", "LinguaAI")
                         .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
                         .build()
 
@@ -79,29 +76,27 @@ class AIService {
                     val responseBody = response.body?.string() ?: return@withContext null
 
                     if (response.code == 429) {
-                        Log.w(tag, "Gemini API rate limited (429), attempt $attempt")
+                        Log.w(tag, "OpenRouter rate limited (429), attempt $attempt")
                         lastError = "Rate limit"
                         continue
                     }
 
                     if (!response.isSuccessful) {
-                        Log.e(tag, "Gemini API error: ${response.code} — $responseBody")
+                        Log.e(tag, "OpenRouter error: ${response.code} — $responseBody")
                         return@withContext null
                     }
 
                     val jsonResponse = JSONObject(responseBody)
-                    return@withContext jsonResponse.getJSONArray("candidates")
+                    return@withContext jsonResponse.getJSONArray("choices")
                         .getJSONObject(0)
-                        .getJSONObject("content")
-                        .getJSONArray("parts")
-                        .getJSONObject(0)
-                        .getString("text")
+                        .getJSONObject("message")
+                        .getString("content")
                 } catch (e: Exception) {
-                    Log.e(tag, "callGeminiAPI error: ${e.message}", e)
+                    Log.e(tag, "callOpenRouterAPI error: ${e.message}", e)
                     lastError = e.message
                 }
             }
-            Log.e(tag, "Gemini API failed after $retries retries: $lastError")
+            Log.e(tag, "OpenRouter failed after $retries retries: $lastError")
             null
         }
     }
@@ -126,7 +121,7 @@ class AIService {
 Верни СТРОГО в формате JSON массив:
 [{"word":"слово","translation":"перевод","transcription":"транскрипция","example_sentence":"пример","example_translation":"перевод примера"}]"""
 
-            val result = callGeminiAPI(prompt)
+            val result = callOpenRouterAPI(prompt)
             if (result != null) {
                 return parseGeneratedWords(result)
             }
@@ -144,7 +139,7 @@ class AIService {
 
 Оцени ответ коротко (1-2 предложения). Если ответ правильный или близкий — похвали. Если нет — объясни разницу."""
 
-            val result = callGeminiAPI(prompt)
+            val result = callOpenRouterAPI(prompt)
             if (result != null) return result
         }
 
@@ -158,7 +153,7 @@ class AIService {
     suspend fun generateExampleSentence(word: String, language: String): String {
         if (useRealAI) {
             val prompt = "Придумай простое предложение со словом '$word' на $language языке с переводом на русский. Формат: предложение — перевод"
-            val result = callGeminiAPI(prompt)
+            val result = callOpenRouterAPI(prompt)
             if (result != null) return result
         }
 
@@ -178,7 +173,7 @@ class AIService {
 
 Дай краткий анализ (2-3 предложения) и совет для улучшения."""
 
-            val result = callGeminiAPI(prompt)
+            val result = callOpenRouterAPI(prompt)
             if (result != null) return result
         }
 
@@ -195,7 +190,7 @@ class AIService {
     suspend fun getDailyTip(): String {
         if (useRealAI) {
             val prompt = "Дай один короткий полезный совет для изучающего иностранный язык (1-2 предложения). Не нумеруй."
-            val result = callGeminiAPI(prompt)
+            val result = callOpenRouterAPI(prompt)
             if (result != null) return result
         }
         return demoTips.random()
