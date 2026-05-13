@@ -147,25 +147,38 @@ class AuthService {
         )
     }
 
+    data class UpdateResult(
+        val success: Boolean,
+        val error: String? = null
+    )
+
     suspend fun updateUserLanguages(
         userId: String,
         targetLanguageId: Int?,
         nativeLanguageId: Int?,
-        difficultyLevel: String? = null
-    ): Boolean {
+        difficultyLevel: String? = null,
+        dailyGoalWords: Int? = null,
+        dailyGoalMinutes: Int? = null
+    ): UpdateResult {
         return try {
             val updates = mutableMapOf<String, Any>()
             targetLanguageId?.let { updates["target_language_id"] = it }
             nativeLanguageId?.let { updates["native_language_id"] = it }
             difficultyLevel?.let { updates["difficulty_level"] = it }
+            dailyGoalWords?.let { updates["daily_goal_words"] = it }
+            dailyGoalMinutes?.let { updates["daily_goal_minutes"] = it }
             updates["updated_at"] = Instant.now().toString()
+
+            Log.d("AuthService", "updateUserLanguages: userId=$userId, updates=$updates")
 
             client.postgrest["users"].update(updates) {
                 filter { eq("id", userId) }
             }
-            true
+            Log.d("AuthService", "updateUserLanguages: success")
+            UpdateResult(true)
         } catch (e: Exception) {
-            false
+            Log.e("AuthService", "updateUserLanguages error: ${e.message}", e)
+            UpdateResult(false, e.message)
         }
     }
 }

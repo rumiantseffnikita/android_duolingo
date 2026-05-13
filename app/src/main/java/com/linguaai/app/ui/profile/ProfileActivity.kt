@@ -57,9 +57,19 @@ class ProfileActivity : AppCompatActivity() {
         lifecycleScope.launch {
             languages = authService.getAllLanguages()
             val names = languages.map { "${it.flagEmoji ?: ""} ${it.name}" }
-            val adapter = ArrayAdapter(this@ProfileActivity, android.R.layout.simple_spinner_dropdown_item, names)
-            binding.spinnerTargetLanguage.adapter = adapter
-            binding.spinnerNativeLanguage.adapter = adapter
+
+            val targetAdapter = ArrayAdapter(
+                this@ProfileActivity, android.R.layout.simple_spinner_item, names
+            )
+            targetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+            val nativeAdapter = ArrayAdapter(
+                this@ProfileActivity, android.R.layout.simple_spinner_item, names
+            )
+            nativeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+            binding.spinnerTargetLanguage.adapter = targetAdapter
+            binding.spinnerNativeLanguage.adapter = nativeAdapter
 
             val targetIdx = languages.indexOfFirst { it.id == targetId }
             val nativeIdx = languages.indexOfFirst { it.id == nativeId }
@@ -82,31 +92,38 @@ class ProfileActivity : AppCompatActivity() {
         val nativeIdx = binding.spinnerNativeLanguage.selectedItemPosition
         val targetLangId = if (targetIdx in languages.indices) languages[targetIdx].id else null
         val nativeLangId = if (nativeIdx in languages.indices) languages[nativeIdx].id else null
+        val goalWords = binding.etDailyGoalWords.text.toString().toIntOrNull() ?: 10
+        val goalMinutes = binding.etDailyGoalMinutes.text.toString().toIntOrNull() ?: 15
 
         binding.progressBar.visibility = View.VISIBLE
 
         lifecycleScope.launch {
-            val success = authService.updateUserLanguages(
-                user.id, targetLangId, nativeLangId, difficulty
+            val result = authService.updateUserLanguages(
+                userId = user.id,
+                targetLanguageId = targetLangId,
+                nativeLanguageId = nativeLangId,
+                difficultyLevel = difficulty,
+                dailyGoalWords = goalWords,
+                dailyGoalMinutes = goalMinutes
             )
 
             binding.progressBar.visibility = View.GONE
 
-            if (success) {
+            if (result.success) {
                 val updatedUser = user.copy(
                     targetLanguageId = targetLangId ?: user.targetLanguageId,
                     nativeLanguageId = nativeLangId ?: user.nativeLanguageId,
                     difficultyLevel = difficulty,
-                    dailyGoalWords = binding.etDailyGoalWords.text.toString().toIntOrNull() ?: 10,
-                    dailyGoalMinutes = binding.etDailyGoalMinutes.text.toString().toIntOrNull() ?: 15
+                    dailyGoalWords = goalWords,
+                    dailyGoalMinutes = goalMinutes
                 )
                 SessionManager.saveUser(updatedUser)
 
-                binding.tvSaveMessage.text = "✅ Сохранено!"
+                binding.tvSaveMessage.text = "Сохранено!"
                 binding.tvSaveMessage.setTextColor(getColor(R.color.green))
                 binding.tvSaveMessage.visibility = View.VISIBLE
             } else {
-                binding.tvSaveMessage.text = "Ошибка сохранения"
+                binding.tvSaveMessage.text = "Ошибка: ${result.error ?: "неизвестная ошибка"}"
                 binding.tvSaveMessage.setTextColor(getColor(R.color.red))
                 binding.tvSaveMessage.visibility = View.VISIBLE
             }

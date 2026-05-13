@@ -52,17 +52,24 @@ class WordService {
         isCorrect: Boolean,
         userAnswer: String,
         aiFeedback: String
-    ) {
+    ): String? {
         try {
-            var activeSession = client.postgrest["learning_sessions"]
-                .select {
-                    filter {
-                        eq("user_id", userId)
-                        isNull("finished_at")
+            Log.d(tag, "saveExerciseResult: userId=$userId, wordId=$wordId, isCorrect=$isCorrect")
+
+            var activeSession = try {
+                client.postgrest["learning_sessions"]
+                    .select {
+                        filter {
+                            eq("user_id", userId)
+                            isNull("finished_at")
+                        }
                     }
-                }
-                .decodeList<LearningSession>()
-                .firstOrNull()
+                    .decodeList<LearningSession>()
+                    .firstOrNull()
+            } catch (e: Exception) {
+                Log.e(tag, "Error fetching active session: ${e.message}", e)
+                null
+            }
 
             if (activeSession == null) {
                 val user = getUserById(userId)
@@ -78,6 +85,7 @@ class WordService {
                     "wrong_answers" to 0,
                     "xp_earned" to 0
                 )
+                Log.d(tag, "Creating new session: $sessionMap")
                 client.postgrest["learning_sessions"].insert(sessionMap)
                 activeSession = LearningSession(
                     id = sessionId,
@@ -89,6 +97,7 @@ class WordService {
                     wrongAnswers = 0,
                     xpEarned = 0
                 )
+                Log.d(tag, "Session created: $sessionId")
             }
 
             val exerciseMap = mapOf(
@@ -101,7 +110,9 @@ class WordService {
                 "answered_at" to Instant.now().toString(),
                 "response_time_ms" to 0
             )
+            Log.d(tag, "Inserting exercise result for session: ${activeSession.id}")
             client.postgrest["exercise_results"].insert(exerciseMap)
+            Log.d(tag, "Exercise result inserted")
 
             val newCorrect = (activeSession.correctAnswers ?: 0) + if (isCorrect) 1 else 0
             val newWrong = (activeSession.wrongAnswers ?: 0) + if (!isCorrect) 1 else 0
@@ -119,6 +130,7 @@ class WordService {
             ) {
                 filter { eq("id", activeSession.id) }
             }
+            Log.d(tag, "Session updated")
 
             val currentUser = getUserById(userId)
             if (currentUser != null) {
@@ -131,11 +143,15 @@ class WordService {
                 ) {
                     filter { eq("id", userId) }
                 }
+                Log.d(tag, "User XP updated")
             }
 
             updateWordProgress(userId, wordId, isCorrect)
+            Log.d(tag, "saveExerciseResult completed successfully")
+            return null
         } catch (e: Exception) {
-            Log.e(tag, "saveExerciseResult Error: ${e.message}")
+            Log.e(tag, "saveExerciseResult Error: ${e.message}", e)
+            return e.message
         }
     }
 

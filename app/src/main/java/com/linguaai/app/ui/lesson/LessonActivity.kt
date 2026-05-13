@@ -103,7 +103,10 @@ class LessonActivity : AppCompatActivity() {
 
             val feedback = aiService.checkAnswer(word.word, word.translation, answer)
 
-            wordService.saveExerciseResult(user.id, word.id, isCorrect, answer, feedback)
+            val saveError = wordService.saveExerciseResult(user.id, word.id, isCorrect, answer, feedback)
+            if (saveError != null) {
+                Toast.makeText(this@LessonActivity, "Ошибка сохранения: $saveError", Toast.LENGTH_LONG).show()
+            }
 
             binding.tvFeedback.text = if (isCorrect) {
                 "✅ $feedback"
