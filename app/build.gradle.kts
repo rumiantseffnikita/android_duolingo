@@ -20,6 +20,9 @@ android {
         // Supabase credentials — replace with your own
         buildConfigField("String", "SUPABASE_URL", "\"https://YOUR_PROJECT.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"YOUR_ANON_KEY\"")
+
+        // Google Gemini AI — get free key at https://aistudio.google.com/apikey
+        buildConfigField("String", "GEMINI_API_KEY", "\"\"")
     }
 
     buildTypes {

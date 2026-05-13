@@ -1,6 +1,7 @@
 package com.linguaai.app.services
 
 import android.util.Log
+import com.linguaai.app.BuildConfig
 import com.linguaai.app.models.GeneratedWord
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,9 +20,7 @@ class AIService {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    private var apiKey: String = ""
-    private var baseUrl: String = "https://foundation-models.api.cloud.ru/v1"
-    private var model: String = "GigaChat-Lightning"
+    private val apiKey: String = BuildConfig.GEMINI_API_KEY
     private val useRealAI: Boolean get() = apiKey.isNotBlank()
 
     private val tag = "AIService"
@@ -42,26 +41,30 @@ class AIService {
         "Совет: Читайте книги на изучаемом языке"
     )
 
-    private suspend fun callCloudRuAPI(prompt: String): String? {
+    private suspend fun callGeminiAPI(prompt: String): String? {
         return withContext(Dispatchers.IO) {
             try {
                 val requestBody = JSONObject().apply {
-                    put("model", model)
-                    put("messages", JSONArray().apply {
+                    put("contents", JSONArray().apply {
                         put(JSONObject().apply {
-                            put("role", "user")
-                            put("content", prompt)
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("text", prompt)
+                                })
+                            })
                         })
                     })
-                    put("temperature", 0.7)
-                    put("max_tokens", 1000)
-                    put("stream", false)
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.7)
+                        put("maxOutputTokens", 1000)
+                    })
                 }
 
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
+
                 val request = Request.Builder()
-                    .url("$baseUrl/chat/completions")
-                    .addHeader("Authorization", "Bearer $apiKey")
-                    .addHeader("Accept", "application/json")
+                    .url(url)
+                    .addHeader("Content-Type", "application/json")
                     .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
                     .build()
 
@@ -69,17 +72,19 @@ class AIService {
                 val responseBody = response.body?.string() ?: return@withContext null
 
                 if (!response.isSuccessful) {
-                    Log.e(tag, "Cloud.ru API error: ${response.code}")
+                    Log.e(tag, "Gemini API error: ${response.code} — $responseBody")
                     return@withContext null
                 }
 
                 val jsonResponse = JSONObject(responseBody)
-                jsonResponse.getJSONArray("choices")
+                jsonResponse.getJSONArray("candidates")
                     .getJSONObject(0)
-                    .getJSONObject("message")
-                    .getString("content")
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
             } catch (e: Exception) {
-                Log.e(tag, "callCloudRuAPI error: ${e.message}")
+                Log.e(tag, "callGeminiAPI error: ${e.message}", e)
                 null
             }
         }
@@ -105,7 +110,7 @@ class AIService {
 Верни СТРОГО в формате JSON массив:
 [{"word":"слово","translation":"перевод","transcription":"транскрипция","example_sentence":"пример","example_translation":"перевод примера"}]"""
 
-            val result = callCloudRuAPI(prompt)
+            val result = callGeminiAPI(prompt)
             if (result != null) {
                 return parseGeneratedWords(result)
             }
@@ -123,7 +128,7 @@ class AIService {
 
 Оцени ответ коротко (1-2 предложения). Если ответ правильный или близкий — похвали. Если нет — объясни разницу."""
 
-            val result = callCloudRuAPI(prompt)
+            val result = callGeminiAPI(prompt)
             if (result != null) return result
         }
 
@@ -137,7 +142,7 @@ class AIService {
     suspend fun generateExampleSentence(word: String, language: String): String {
         if (useRealAI) {
             val prompt = "Придумай простое предложение со словом '$word' на $language языке с переводом на русский. Формат: предложение — перевод"
-            val result = callCloudRuAPI(prompt)
+            val result = callGeminiAPI(prompt)
             if (result != null) return result
         }
 
@@ -157,7 +162,7 @@ class AIService {
 
 Дай краткий анализ (2-3 предложения) и совет для улучшения."""
 
-            val result = callCloudRuAPI(prompt)
+            val result = callGeminiAPI(prompt)
             if (result != null) return result
         }
 
@@ -172,6 +177,11 @@ class AIService {
     }
 
     suspend fun getDailyTip(): String {
+        if (useRealAI) {
+            val prompt = "Дай один короткий полезный совет для изучающего иностранный язык (1-2 предложения). Не нумеруй."
+            val result = callGeminiAPI(prompt)
+            if (result != null) return result
+        }
         return demoTips.random()
     }
 
