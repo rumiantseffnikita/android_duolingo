@@ -41,52 +41,68 @@ class AIService {
         "Совет: Читайте книги на изучаемом языке"
     )
 
-    private suspend fun callGeminiAPI(prompt: String): String? {
+    private suspend fun callGeminiAPI(prompt: String, retries: Int = 2): String? {
         return withContext(Dispatchers.IO) {
-            try {
-                val requestBody = JSONObject().apply {
-                    put("contents", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("parts", JSONArray().apply {
-                                put(JSONObject().apply {
-                                    put("text", prompt)
+            var lastError: String? = null
+            for (attempt in 0..retries) {
+                try {
+                    if (attempt > 0) {
+                        Log.d(tag, "Gemini retry attempt $attempt, waiting ${attempt * 15}s...")
+                        Thread.sleep(attempt * 15_000L)
+                    }
+
+                    val requestBody = JSONObject().apply {
+                        put("contents", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("parts", JSONArray().apply {
+                                    put(JSONObject().apply {
+                                        put("text", prompt)
+                                    })
                                 })
                             })
                         })
-                    })
-                    put("generationConfig", JSONObject().apply {
-                        put("temperature", 0.7)
-                        put("maxOutputTokens", 1000)
-                    })
+                        put("generationConfig", JSONObject().apply {
+                            put("temperature", 0.7)
+                            put("maxOutputTokens", 1000)
+                        })
+                    }
+
+                    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
+
+                    val request = Request.Builder()
+                        .url(url)
+                        .addHeader("Content-Type", "application/json")
+                        .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
+                        .build()
+
+                    val response = httpClient.newCall(request).execute()
+                    val responseBody = response.body?.string() ?: return@withContext null
+
+                    if (response.code == 429) {
+                        Log.w(tag, "Gemini API rate limited (429), attempt $attempt")
+                        lastError = "Rate limit"
+                        continue
+                    }
+
+                    if (!response.isSuccessful) {
+                        Log.e(tag, "Gemini API error: ${response.code} — $responseBody")
+                        return@withContext null
+                    }
+
+                    val jsonResponse = JSONObject(responseBody)
+                    return@withContext jsonResponse.getJSONArray("candidates")
+                        .getJSONObject(0)
+                        .getJSONObject("content")
+                        .getJSONArray("parts")
+                        .getJSONObject(0)
+                        .getString("text")
+                } catch (e: Exception) {
+                    Log.e(tag, "callGeminiAPI error: ${e.message}", e)
+                    lastError = e.message
                 }
-
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
-
-                val request = Request.Builder()
-                    .url(url)
-                    .addHeader("Content-Type", "application/json")
-                    .post(requestBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = httpClient.newCall(request).execute()
-                val responseBody = response.body?.string() ?: return@withContext null
-
-                if (!response.isSuccessful) {
-                    Log.e(tag, "Gemini API error: ${response.code} — $responseBody")
-                    return@withContext null
-                }
-
-                val jsonResponse = JSONObject(responseBody)
-                jsonResponse.getJSONArray("candidates")
-                    .getJSONObject(0)
-                    .getJSONObject("content")
-                    .getJSONArray("parts")
-                    .getJSONObject(0)
-                    .getString("text")
-            } catch (e: Exception) {
-                Log.e(tag, "callGeminiAPI error: ${e.message}", e)
-                null
             }
+            Log.e(tag, "Gemini API failed after $retries retries: $lastError")
+            null
         }
     }
 
