@@ -115,10 +115,11 @@ class AIService {
                 else -> "начального уровня"
             }
 
-            val prompt = """Сгенерируй $count уникальных и полезных слов для изучения $targetLanguage языка.
-Родной язык студента: $nativeLanguage. Уровень: $difficultyText.
+            val prompt = """Сгенерируй $count уникальных и полезных слов на языке "$targetLanguage" с переводом на "$nativeLanguage".
+Уровень: $difficultyText.
+Поле "word" должно содержать слово на $targetLanguage языке, поле "translation" — перевод на $nativeLanguage.
 
-Верни СТРОГО в формате JSON массив:
+Ответь ТОЛЬКО JSON массивом, без пояснений:
 [{"word":"слово","translation":"перевод","transcription":"транскрипция","example_sentence":"пример","example_translation":"перевод примера"}]"""
 
             val result = callOpenRouterAPI(prompt)
@@ -198,11 +199,21 @@ class AIService {
 
     private fun parseGeneratedWords(json: String): List<GeneratedWord> {
         return try {
-            val cleaned = json.trim()
+            Log.d(tag, "parseGeneratedWords input: ${json.take(500)}")
+
+            // Extract JSON array from response (AI may wrap it in text/markdown)
+            var cleaned = json.trim()
                 .removePrefix("```json")
                 .removePrefix("```")
                 .removeSuffix("```")
                 .trim()
+
+            // Find the first '[' and last ']' to extract the JSON array
+            val startIdx = cleaned.indexOf('[')
+            val endIdx = cleaned.lastIndexOf(']')
+            if (startIdx >= 0 && endIdx > startIdx) {
+                cleaned = cleaned.substring(startIdx, endIdx + 1)
+            }
 
             val jsonArray = JSONArray(cleaned)
             val words = mutableListOf<GeneratedWord>()
@@ -218,7 +229,8 @@ class AIService {
                     )
                 )
             }
-            words
+            Log.d(tag, "parseGeneratedWords: parsed ${words.size} words")
+            if (words.isNotEmpty()) words else getDemoWords()
         } catch (e: Exception) {
             Log.e(tag, "parseGeneratedWords error: ${e.message}")
             getDemoWords()
