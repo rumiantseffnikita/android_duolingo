@@ -23,11 +23,11 @@ class StatisticsService {
                 .select {
                     filter {
                         eq("user_id", userId)
-                        neq("finished_at", "null")
                     }
-                    limit(20)
+                    limit(50)
                 }
                 .decodeList<LearningSession>()
+                .filter { it.finishedAt != null }
 
             val totalWords = client.postgrest["word_progresses"]
                 .select { filter { eq("user_id", userId) } }

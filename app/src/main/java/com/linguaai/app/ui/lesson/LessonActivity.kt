@@ -59,15 +59,23 @@ class LessonActivity : AppCompatActivity() {
 
             val generated = aiService.generateWordsForLesson(targetLang, nativeLang, difficulty)
             if (generated.isNotEmpty()) {
-                words = generated.mapIndexed { index, gw ->
-                    Word(
-                        id = -(index + 1),
-                        word = gw.word,
-                        translation = gw.translation,
-                        transcription = gw.transcription,
-                        exampleSentence = gw.exampleSentence,
-                        exampleTranslation = gw.exampleTranslation
-                    )
+                val langId = user.targetLanguageId ?: 1
+                val savedWords = wordService.saveGeneratedWords(generated, langId)
+                if (savedWords.isNotEmpty()) {
+                    words = savedWords
+                    Log.d("LessonActivity", "Using ${savedWords.size} saved AI words with real DB IDs")
+                } else {
+                    words = generated.mapIndexed { index, gw ->
+                        Word(
+                            id = -(index + 1),
+                            word = gw.word,
+                            translation = gw.translation,
+                            transcription = gw.transcription,
+                            exampleSentence = gw.exampleSentence,
+                            exampleTranslation = gw.exampleTranslation
+                        )
+                    }
+                    Log.d("LessonActivity", "Using AI words with temp IDs (DB save failed)")
                 }
             } else {
                 words = wordService.getWordsForLesson(user.id)

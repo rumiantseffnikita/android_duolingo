@@ -214,6 +214,37 @@ class WordService {
         }
     }
 
+    suspend fun saveGeneratedWords(generatedWords: List<com.linguaai.app.models.GeneratedWord>, languageId: Int): List<Word> {
+        return try {
+            val savedWords = mutableListOf<Word>()
+            for (gw in generatedWords) {
+                try {
+                    val wordJson = buildJsonObject {
+                        put("language_id", languageId)
+                        put("word", gw.word)
+                        put("translation", gw.translation)
+                        put("transcription", gw.transcription ?: "")
+                        put("example_sentence", gw.exampleSentence ?: "")
+                        put("example_translation", gw.exampleTranslation ?: "")
+                    }
+                    val result = client.postgrest["words"].insert(wordJson) {
+                        select()
+                    }.decodeList<Word>()
+                    if (result.isNotEmpty()) {
+                        savedWords.add(result.first())
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "saveGeneratedWord error for '${gw.word}': ${e.message}")
+                }
+            }
+            Log.d(tag, "saveGeneratedWords: saved ${savedWords.size}/${generatedWords.size} words to DB")
+            savedWords
+        } catch (e: Exception) {
+            Log.e(tag, "saveGeneratedWords Error: ${e.message}")
+            emptyList()
+        }
+    }
+
     suspend fun getLearnedWordsCount(userId: String): Int {
         return try {
             client.postgrest["word_progresses"]
