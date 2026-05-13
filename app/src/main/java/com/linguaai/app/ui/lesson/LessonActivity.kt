@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.linguaai.app.databinding.ActivityLessonBinding
+import android.util.Log
 import com.linguaai.app.models.Word
 import com.linguaai.app.services.AIService
 import com.linguaai.app.services.AchievementService
@@ -54,6 +55,7 @@ class LessonActivity : AppCompatActivity() {
             val targetLang = languages.find { it.id == user.targetLanguageId }?.name ?: "Английский"
             val nativeLang = languages.find { it.id == user.nativeLanguageId }?.name ?: "Русский"
             val difficulty = user.difficultyLevel ?: "beginner"
+            Log.d("LessonActivity", "loadWords: targetLangId=${user.targetLanguageId}, targetLang=$targetLang, nativeLang=$nativeLang, difficulty=$difficulty")
 
             val generated = aiService.generateWordsForLesson(targetLang, nativeLang, difficulty)
             if (generated.isNotEmpty()) {

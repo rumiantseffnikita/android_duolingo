@@ -52,7 +52,7 @@ class AIService {
                     }
 
                     val requestBody = JSONObject().apply {
-                        put("model", "openrouter/free")
+                        put("model", "nvidia/nemotron-3-super-120b-a12b:free")
                         put("messages", JSONArray().apply {
                             put(JSONObject().apply {
                                 put("role", "user")
@@ -86,11 +86,18 @@ class AIService {
                         return@withContext null
                     }
 
+                    Log.d(tag, "OpenRouter response: ${responseBody.take(300)}")
                     val jsonResponse = JSONObject(responseBody)
-                    return@withContext jsonResponse.getJSONArray("choices")
+                    val content = jsonResponse.getJSONArray("choices")
                         .getJSONObject(0)
                         .getJSONObject("message")
-                        .getString("content")
+                        .optString("content", "")
+                    if (content.isBlank() || content == "null") {
+                        Log.w(tag, "OpenRouter returned empty content, attempt $attempt")
+                        lastError = "Empty response"
+                        continue
+                    }
+                    return@withContext content
                 } catch (e: Exception) {
                     Log.e(tag, "callOpenRouterAPI error: ${e.message}", e)
                     lastError = e.message
