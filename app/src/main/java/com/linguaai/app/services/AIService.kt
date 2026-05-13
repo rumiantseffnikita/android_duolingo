@@ -60,7 +60,7 @@ class AIService {
                             })
                         })
                         put("temperature", 0.7)
-                        put("max_tokens", 1000)
+                        put("max_tokens", 4000)
                     }
 
                     val request = Request.Builder()
@@ -220,6 +220,13 @@ class AIService {
             val endIdx = cleaned.lastIndexOf(']')
             if (startIdx >= 0 && endIdx > startIdx) {
                 cleaned = cleaned.substring(startIdx, endIdx + 1)
+            } else if (startIdx >= 0) {
+                // JSON was truncated — try to salvage complete objects
+                cleaned = cleaned.substring(startIdx)
+                val lastComplete = cleaned.lastIndexOf('}')
+                if (lastComplete > 0) {
+                    cleaned = cleaned.substring(0, lastComplete + 1) + "]"
+                }
             }
 
             val jsonArray = JSONArray(cleaned)
